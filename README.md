@@ -269,6 +269,7 @@ The included rabbit image is used by default.
 ### 5. Interactive Shell
 
 You can freely operate inside the Docker container.
+Port forwarding for UART, VNC, HTTP viewer, and Renode monitor is enabled.
 
 ```bash
 ./exec.sh
@@ -277,6 +278,7 @@ You can freely operate inside the Docker container.
 make help           # List available targets
 make demo-info      # Package details
 make check-results  # Check test results
+make demo-linux     # Boot Linux (telnet localhost 4321)
 ```
 
 ---
@@ -305,13 +307,14 @@ draw_engine/
 │   ├── results.xml            #   cocotb test results (JUnit XML)
 │   └── gallery/               #   Gallery of rendering output images
 ├── exec.sh                     # Demo launch script
+├── source/                     # Open source components (GPL compliance)
+│   └── linux/                 #   Linux userland source (fb_tux.c)
 ├── test.sh                     # Package verification script
 └── README.md                   # This file
 ```
 
-> **Note**: All components included in this package (RTL, firmware, shared libraries,
-> Linux boot images) consist only of pre-built binaries.
-> No source code or driver sources are included.
+> **Note**: RTL, firmware, and shared libraries are distributed as pre-built binaries only.
+> Open source components required for GPL compliance are included in `source/`.
 
 ## Package Verification
 
@@ -321,6 +324,12 @@ draw_engine/
 
 # Check test results only
 ./test.sh verify
+
+# Run image processing demo
+./test.sh demo
+
+# Boot Linux demo (interactive, Ctrl+C to stop)
+./test.sh linux
 ```
 
 ## About RTL

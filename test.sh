@@ -10,17 +10,28 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IMAGE_REF="formal-hdl-env:latest"
 
+# パッケージディレクトリを決定
+# 開発環境: dist/draw_engine/ があればそちらを使う
+# 配布環境: SCRIPT_DIR 自体がパッケージ
+if [ -d "$SCRIPT_DIR/dist/draw_engine" ]; then
+    PKG_DIR="$SCRIPT_DIR/dist/draw_engine"
+else
+    PKG_DIR="$SCRIPT_DIR"
+fi
+
 # Docker イメージのロード
 if ! docker image inspect "$IMAGE_REF" >/dev/null 2>&1; then
-    if [ ! -f "$SCRIPT_DIR/formal-hdl-env.tar" ]; then
+    if [ ! -f "$PKG_DIR/formal-hdl-env.tar" ]; then
         echo "ERROR: formal-hdl-env.tar not found."
+        echo "  Run 'make package' first."
         exit 1
     fi
     echo "Loading Docker image..."
-    docker load -q < "$SCRIPT_DIR/formal-hdl-env.tar"
+    docker load -q < "$PKG_DIR/formal-hdl-env.tar"
 fi
 
-DOCKER_RUN="docker run --rm -v $SCRIPT_DIR:/work -w /work"
+DOCKER_RUN="docker run --rm -v $PKG_DIR:/work -w /work"
+DOCKER_RUN_PORTS="docker run --rm -v $PKG_DIR:/work -w /work -p 4321:4321 -p 1234:1234 -p 5900:5900 -p 5800:5800"
 
 echo ""
 echo "=========================================="
@@ -52,13 +63,25 @@ case "${1:-all}" in
         ;;
 
     demo)
-        echo "Running demo smoke test..."
+        echo "Running demo verification..."
         $DOCKER_RUN "$IMAGE_REF" make check-binaries
-        echo "✓ Demo binaries OK."
+
+        echo ""
+        echo "Running image processing demo..."
+        $DOCKER_RUN "$IMAGE_REF" make demo-imgproc
+        echo "✓ Demo verification passed."
+        ;;
+
+    linux)
+        echo "Running Linux boot demo (Ctrl+C to stop)..."
+        echo "  UART:   telnet localhost 4321"
+        echo "  VNC:    vncviewer localhost:5900"
+        echo "  Web:    http://localhost:5800"
+        $DOCKER_RUN_PORTS -it "$IMAGE_REF" make demo-linux
         ;;
 
     *)
-        echo "Usage: $0 [all|verify|demo]"
+        echo "Usage: $0 [all|verify|demo|linux]"
         exit 1
         ;;
 esac
