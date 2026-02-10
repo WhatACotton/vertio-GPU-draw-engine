@@ -195,22 +195,13 @@ To download the actual file:
 git lfs pull
 ```
 
-### 1. Extract (from tar.gz package)
-
-If you downloaded the tar.gz archive instead of cloning:
-
-```bash
-tar xzf draw_engine.tar.gz
-cd draw_engine
-```
-
-### 2. Load Docker Image
+### 1. Load Docker Image
 
 ```bash
 docker load < formal-hdl-env.tar
 ```
 
-### 3. Linux Boot Demo 🐧
+### 2. Linux Boot Demo 🐧
 
 Boot Linux on a RISC-V SoC equipped with Draw Engine and perform
 HW-accelerated rendering to the framebuffer via VirtIO-GPU.
