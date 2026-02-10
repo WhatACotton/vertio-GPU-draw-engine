@@ -1,0 +1,9 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1770699657" />
+    <testcase name="test_01_mmio_probe" classname="test_virtio_integration" file="/home/cotton/code/draw_COJT/tests/test_virtio_integration.py" lineno="468" time="0.10668420791625977" sim_time_ns="180.0" ratio_time="1687.2225375782741" />
+    <testcase name="test_02_driver_init" classname="test_virtio_integration" file="/home/cotton/code/draw_COJT/tests/test_virtio_integration.py" lineno="491" time="0.006524562835693359" sim_time_ns="750.0" ratio_time="114950.23021267266" />
+    <testcase name="test_03_get_display_info" classname="test_virtio_integration" file="/home/cotton/code/draw_COJT/tests/test_virtio_integration.py" lineno="509" time="0.020989656448364258" sim_time_ns="1580.0" ratio_time="75275.17202994195" />
+    <testcase name="test_04_resource_flush_e2e" classname="test_virtio_integration" file="/home/cotton/code/draw_COJT/tests/test_virtio_integration.py" lineno="554" time="0.06352400779724121" sim_time_ns="4120.0" ratio_time="64857.368778594726" />
+  </testsuite>
+</testsuites>

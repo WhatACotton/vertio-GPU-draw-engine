@@ -1,0 +1,44 @@
+:name: DrawEngine Linux SoC (Interactive)
+:description: Boot Linux with draw_engine co-simulation and interactive UART console via telnet
+
+using sysbus
+mach create "draw-engine-linux"
+
+machine LoadPlatformDescription @platform_virtio.repl
+
+# ── Load OpenSBI + Linux kernel + DTB ──────────────────────────
+sysbus LoadELF $elf
+sysbus LoadBinary $kernel 0x40400000
+sysbus LoadBinary $dtb 0x40200000
+
+# OpenSBI boot protocol: a0 = hart ID, a1 = DTB address
+cpu PC 0x00000000
+cpu SetRegister 10 0x0
+cpu SetRegister 11 0x40200000
+
+# ── Connect Verilator co-simulated virtio_gpu_engine ──────────
+virtio_gpu_engine SimulationFilePathLinux @/work/lib/libVtop_virtio.so
+
+# ── Interactive UART console ──────────────────────────────────
+# Creates a TCP server on port 4321 for UART I/O.
+# Connect with:  telnet localhost 4321
+emulation CreateServerSocketTerminal 4321 "term0" false
+connector Connect uart term0
+
+# Also log to file for later review
+uart CreateFileBackend @/tmp/uart_output_interactive.txt true
+
+logFile @/tmp/renode_interactive.log true
+logLevel 3
+
+# ── Co-simulation logging ─────────────────────────────────────
+logLevel 1 virtio_gpu_engine
+
+machine SetAdvanceImmediately true
+
+echo "============================================"
+echo " UART console available on port 4321"
+echo " Connect with:  telnet localhost 4321"
+echo "============================================"
+
+start

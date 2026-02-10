@@ -1,0 +1,34 @@
+:name: DrawEngine Framebuffer Demo
+:description: VexRiscv with Verilator co-simulated draw_engine — framebuffer rendering
+
+using sysbus
+mach create "draw-engine-soc"
+
+machine LoadPlatformDescription @platform.repl
+
+# ── Load firmware ────────────────────────────────────────────
+# Framebuffer drawing demo
+sysbus LoadBinary @/work/fw/draw_fb.bin 0x00000000
+cpu PC 0x00000000
+
+# ── Connect Verilator co-simulated draw_engine ──────────────
+draw_engine SimulationFilePathLinux @/work/lib/libVtop.so
+
+# ── UART console (log to file) ──────────────────────────────
+logFile @/tmp/renode_uart.log true
+showAnalyzer uart
+
+# ── Framebuffer tester (headless — saves to PNG) ────────────
+# The video peripheral reads draw_engine's DMA output from ram.
+emulation CreateFrameBufferTester "fb_tester" 10
+fb_tester AttachTo sysbus.litex_video
+
+# ── Start ───────────────────────────────────────────────────
+logLevel 1 draw_engine
+
+machine SetAdvanceImmediately true
+emulation RunFor "00:00:00.050"
+
+# ── Capture framebuffer after execution ─────────────────────
+# Dump raw framebuffer from RAM using Python
+python "from System.IO import File; data = self.Machine.SystemBus.ReadBytes(0x40C00000, 1228800); File.WriteAllBytes('/tmp/draw_engine_fb.raw', data)"

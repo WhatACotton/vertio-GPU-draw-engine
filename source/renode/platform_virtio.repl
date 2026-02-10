@@ -1,0 +1,83 @@
+// DrawEngine Linux SoC with VirtIO-GPU — Renode Platform Description
+//
+// VexRiscv (rv32ima, MMU) running Linux, with virtio_gpu_engine
+// co-simulated via Verilator (dual AXI master ports).
+//
+// IRQ architecture:
+//   builtInIrqController: false — standard RISC-V interrupt model
+//   CLINT [0,1] → cpu@[3,7]  (MSI=cause3, MTI=cause7)
+//   PLIC  [0,1] → cpu@[11,9] (MEI=cause11, SEI=cause9)
+//   virtio_gpu_engine IRQ → plic@1 (VirtIO used-buffer notification)
+//   virtio_gpu_engine IRQ → plic@2 (draw_engine completion)
+//
+// Memory map:
+//   0x0000_0000  ROM       (512 KiB)   — OpenSBI
+//   0x1000_0000  SRAM      (64 KiB)
+//   0x4000_0000  main_ram  (64 MiB)    — Linux kernel + rootfs + FB
+//   0x8200_0000  virtio_gpu_engine (64 KiB, co-simulated)
+//     0x8200_0000  VirtIO MMIO registers (0x000–0x1FF)
+//     0x8200_2000  Legacy draw_engine APB registers (0x2000–0x2FFF)
+//   0xF000_0000  CSR space (UART)
+//   0xF001_0000  CLINT
+//   0xF0C0_0000  PLIC
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imafdc_zicsr_zifencei"
+    privilegedArchitecture: PrivilegedArchitecture.Priv1_10
+    builtInIrqController: false
+    timeProvider: clint
+
+rom: Memory.MappedMemory @ sysbus 0x00000000
+    size: 0x00080000
+
+sram: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x00010000
+
+ram: Memory.MappedMemory @ sysbus 0x40000000
+    size: 0x04000000
+
+uart: UART.NS16550 @ sysbus 0xF0001800
+    wideRegisters: true
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0xF0010000
+    frequency: 50000000
+    numberOfTargets: 1
+    // Standard RISC-V: output 0 = MSip (cause 3), output 1 = MTimer (cause 7)
+    [0, 1] -> cpu@[3, 7]
+
+plic: IRQControllers.PlatformLevelInterruptController @ sysbus 0xF0C00000
+    numberOfSources: 31
+    numberOfContexts: 2
+    prioritiesEnabled: false
+    // Context 0 = Machine External (cause 11), Context 1 = Supervisor External (cause 9)
+    [0, 1] -> cpu@[11, 9]
+
+// VirtIO GPU Engine — co-simulated via Verilator
+// Contains VirtIO MMIO regs + draw_engine + virtqueue engine
+// Single AXI master port: unified DMA for both draw_engine pixels
+// and virtqueue descriptor/command access (RTL-level arbiter).
+//
+// sim_main_virtio.cpp registers:
+//   registerInterrupt(VIRTIO_IRQ, 2) → cosim GPIO output 2
+//   registerInterrupt(DRW_IRQ, 3)    → cosim GPIO output 3
+// cosimToRenodeSignalRange <0, +4> maps irq_addr 0..3 to GPIO outputs 0..3
+// GPIO 2 → plic@1 (VirtIO interrupt → PLIC source 1)
+// GPIO 3 → plic@2 (draw_engine interrupt → PLIC source 2)
+virtio_gpu_engine: CoSimulated.CoSimulatedPeripheral @ sysbus <0x82000000, +0x10000>
+    frequency: 50000000
+    limitBuffer: 100000
+    timeout: 10000
+    cosimToRenodeSignalRange: <0, +4>
+    2 -> plic@1
+    3 -> plic@2
+
+// LiteX Framebuffer — reads pixel data from draw_engine's FB region
+litex_video: Video.LiteX_Framebuffer_CSR32 @ {
+    sysbus new Bus.BusMultiRegistration { address: 0xF0006000; size: 0xC; region: "dma" };
+    sysbus new Bus.BusMultiRegistration { address: 0xF0006800; size: 0x24; region: "vtg" }
+}
+    format: PixelFormat.ARGB8888
+    memory: ram
+    offset: 0x03E00000
+    hres: 640
+    vres: 480

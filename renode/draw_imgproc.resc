@@ -1,0 +1,42 @@
+:name: DrawEngine Image Processor
+:description: VexRiscv + Verilator co-simulated draw_engine — external image processing
+
+using sysbus
+mach create "draw-engine-soc"
+
+machine LoadPlatformDescription @platform.repl
+
+# ── Load firmware ────────────────────────────────────────────
+sysbus LoadBinary @/work/fw/draw_imgproc.bin 0x00000000
+cpu PC 0x00000000
+
+# ── Load external image data into RAM ────────────────────────
+# Header (8 bytes: u32 width, u32 height) at 0x40700000
+sysbus LoadBinary $img_hdr 0x40700000
+# Pixel data (raw ARGB8888) at 0x40800000
+sysbus LoadBinary $img_bin 0x40800000
+
+# ── Load pre-composited framebuffer directly into FB region ──
+# This bypasses the slow Verilator AXI path for large fills.
+sysbus LoadBinary $fb_bin 0x40C00000
+
+# ── Connect Verilator co-simulated draw_engine ──────────────
+draw_engine SimulationFilePathLinux @/work/lib/libVtop.so
+
+# ── UART console ────────────────────────────────────────────
+logFile @/tmp/renode_uart.log true
+showAnalyzer uart
+
+# ── Framebuffer tester ──────────────────────────────────────
+emulation CreateFrameBufferTester "fb_tester" 10
+fb_tester AttachTo sysbus.litex_video
+
+# ── Start ───────────────────────────────────────────────────
+logLevel 1 draw_engine
+machine SetAdvanceImmediately true
+emulation RunFor "00:00:01.000"
+
+# ── Dump output framebuffer ─────────────────────────────────
+python "from Antmicro.Renode.Peripherals.Bus import SystemBusExtensions; from System.IO import File; bus = monitor.Machine.SystemBus; data = SystemBusExtensions.ReadBytes(bus, long(0x40C00000), int(1228800)); File.WriteAllBytes('/tmp/draw_engine_output.raw', data); File.WriteAllBytes('/tmp/draw_engine_dump_ok', bytearray(b'OK'))"
+
+quit

@@ -1,0 +1,286 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "litedram-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768551793,
+        "narHash": "sha256-aN1QPR/5rg9kTmtTtvXDfbYCPd7mzH4SLXxzdnktR0A=",
+        "owner": "enjoy-digital",
+        "repo": "litedram",
+        "rev": "64eaa3d0b6ff81842f65fafd16562790445a804b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "enjoy-digital",
+        "repo": "litedram",
+        "type": "github"
+      }
+    },
+    "liteeth-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768551790,
+        "narHash": "sha256-BMkMvp0LlBelkExVJhJO/3aB53Klkmg6rDe1INgz4vM=",
+        "owner": "enjoy-digital",
+        "repo": "liteeth",
+        "rev": "6c64d315a386e690b5a03cd972684a04c53e6d20",
+        "type": "github"
+      },
+      "original": {
+        "owner": "enjoy-digital",
+        "repo": "liteeth",
+        "type": "github"
+      }
+    },
+    "liteiclink-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770280590,
+        "narHash": "sha256-wy0/456AD0lF/J7ZVkoRj41QRQp+0tuUaOLm7MEktN8=",
+        "owner": "enjoy-digital",
+        "repo": "liteiclink",
+        "rev": "87430e983964cd5efab9936b79c63a61a811495c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "enjoy-digital",
+        "repo": "liteiclink",
+        "type": "github"
+      }
+    },
+    "litescope-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769161172,
+        "narHash": "sha256-Mc+zA5dKB/4Ac5h5u9RhRYT23Lq0+aPBw8y58ruy0Mw=",
+        "owner": "enjoy-digital",
+        "repo": "litescope",
+        "rev": "9219bd990b9ef51cf641e6ef0a66942444e352f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "enjoy-digital",
+        "repo": "litescope",
+        "type": "github"
+      }
+    },
+    "litespi-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768551814,
+        "narHash": "sha256-qh4ehg+cTyWCQAOaa6YMV3ItYtc7UINnERS2puhd11Q=",
+        "owner": "litex-hub",
+        "repo": "litespi",
+        "rev": "fa17b81446f82b0c3c1cc50979b04d62bf32bb70",
+        "type": "github"
+      },
+      "original": {
+        "owner": "litex-hub",
+        "repo": "litespi",
+        "type": "github"
+      }
+    },
+    "litex-boards-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770368479,
+        "narHash": "sha256-tGeExgEBXAZ3/vt8DrtTNegmoLKWTwS5oJsUT87yYnY=",
+        "owner": "litex-hub",
+        "repo": "litex-boards",
+        "rev": "52572b0bbb1837a18055c3be7b366e3590177859",
+        "type": "github"
+      },
+      "original": {
+        "owner": "litex-hub",
+        "repo": "litex-boards",
+        "type": "github"
+      }
+    },
+    "litex-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770284141,
+        "narHash": "sha256-PZ18tRawgkJ27frNoaWkAIBWscHtEhqK0Mpe/K6qSeU=",
+        "owner": "enjoy-digital",
+        "repo": "litex",
+        "rev": "4452113fa0ad43f4373258710c837ee408e5b0d0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "enjoy-digital",
+        "repo": "litex",
+        "type": "github"
+      }
+    },
+    "migen-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767585922,
+        "narHash": "sha256-oDC8yWzJbCNMYeDiBTR6V9MUYvdDp1MArIfLmTwycRY=",
+        "owner": "m-labs",
+        "repo": "migen",
+        "rev": "e19524c963a8342952840983047557707fbe0b6a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "m-labs",
+        "repo": "migen",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1770197578,
+        "narHash": "sha256-AYqlWrX09+HvGs8zM6ebZ1pwUqjkfpnv8mewYwAo+iM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "00c21e4c93d963c50d4c0c89bfa84ed6e0694df2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "pythondata-cpu-ibex-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1736791453,
+        "narHash": "sha256-9j/Yn7fcwfGv1cTUOtiwFNk3EcBX37JkWF1KprrqMwg=",
+        "owner": "litex-hub",
+        "repo": "pythondata-cpu-ibex",
+        "rev": "44d4d7eb9e5d238dd2ebb269d2471597addad74a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "litex-hub",
+        "repo": "pythondata-cpu-ibex",
+        "type": "github"
+      }
+    },
+    "pythondata-cpu-vexriscv-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1714046786,
+        "narHash": "sha256-wkdKTODOu83hCsBTcH+5skNlHr6ypuUu04Tyop4PrEc=",
+        "owner": "litex-hub",
+        "repo": "pythondata-cpu-vexriscv",
+        "rev": "1979a644dbe64d8d32dfbdd970dccee6add63723",
+        "type": "github"
+      },
+      "original": {
+        "owner": "litex-hub",
+        "repo": "pythondata-cpu-vexriscv",
+        "type": "github"
+      }
+    },
+    "pythondata-misc-tapcfg-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1653940700,
+        "narHash": "sha256-+Rke915ThzH1fYVVRpnAZQgvlG5JklM1hh/ObeeTm9o=",
+        "owner": "litex-hub",
+        "repo": "pythondata-misc-tapcfg",
+        "rev": "fbcb02422940bbb97c492f0c970959d262b33632",
+        "type": "github"
+      },
+      "original": {
+        "owner": "litex-hub",
+        "repo": "pythondata-misc-tapcfg",
+        "type": "github"
+      }
+    },
+    "pythondata-software-compiler_rt-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1604528842,
+        "narHash": "sha256-s/tfxhPwYAnu1z1LxEimeYWjX6IHbF2uD/1HjvQn/xo=",
+        "ref": "refs/heads/master",
+        "rev": "fcb03245613ccf3079cc833a701f13d0beaae09d",
+        "revCount": 6160,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/litex-hub/pythondata-software-compiler_rt"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/litex-hub/pythondata-software-compiler_rt"
+      }
+    },
+    "pythondata-software-picolibc-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1667755016,
+        "narHash": "sha256-0OpEdBGu/tkFFPUi1RLsTqF2tKwLSfYIi+vPqgfLMd8=",
+        "ref": "refs/heads/master",
+        "rev": "a5e11229885a87083ec54034f8d693ba52ea2718",
+        "revCount": 201,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/litex-hub/pythondata-software-picolibc"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/litex-hub/pythondata-software-picolibc"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "litedram-src": "litedram-src",
+        "liteeth-src": "liteeth-src",
+        "liteiclink-src": "liteiclink-src",
+        "litescope-src": "litescope-src",
+        "litespi-src": "litespi-src",
+        "litex-boards-src": "litex-boards-src",
+        "litex-src": "litex-src",
+        "migen-src": "migen-src",
+        "nixpkgs": "nixpkgs",
+        "pythondata-cpu-ibex-src": "pythondata-cpu-ibex-src",
+        "pythondata-cpu-vexriscv-src": "pythondata-cpu-vexriscv-src",
+        "pythondata-misc-tapcfg-src": "pythondata-misc-tapcfg-src",
+        "pythondata-software-compiler_rt-src": "pythondata-software-compiler_rt-src",
+        "pythondata-software-picolibc-src": "pythondata-software-picolibc-src"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

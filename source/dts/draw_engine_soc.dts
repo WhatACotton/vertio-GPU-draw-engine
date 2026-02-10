@@ -1,0 +1,100 @@
+/*
+ * draw_engine_soc.dts — Device Tree for DrawEngine Linux SoC
+ *
+ * VexRiscv (rv32ima + MMU) running Linux with draw_engine.
+ * This DTS is for use with Renode simulation.
+ *
+ * Memory map:
+ *   0x0000_0000  ROM       (128 KiB)
+ *   0x1000_0000  SRAM      (64 KiB)
+ *   0x4000_0000  main_ram  (64 MiB)
+ *   0x8200_0000  draw_engine (64 KiB)
+ *   0xF000_0000  CSR (UART, Timer)
+ *   0xF001_0000  CLINT
+ */
+
+/dts-v1/;
+
+/ {
+    #address-cells = <1>;
+    #size-cells = <1>;
+    compatible = "litex,draw-engine-soc";
+    model = "DrawEngine Linux SoC";
+
+    chosen {
+        bootargs = "console=liteuart earlycon=liteuart,0xf0001800 rootwait root=/dev/ram0";
+        stdout-path = "serial0:115200n8";
+        linux,initrd-start = <0x40800000>;
+        linux,initrd-end   = <0x41000000>;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        timebase-frequency = <50000000>;
+
+        cpu@0 {
+            device_type = "cpu";
+            compatible = "riscv";
+            riscv,isa = "rv32imafdc_zicsr_zifencei";
+            riscv,isa-base = "rv32i";
+            riscv,isa-extensions = "i", "m", "a", "f", "d", "c", "zicsr", "zifencei";
+            mmu-type = "riscv,sv32";
+            reg = <0>;
+            clock-frequency = <50000000>;
+            status = "okay";
+
+            interrupt-controller {
+                #interrupt-cells = <1>;
+                interrupt-controller;
+                compatible = "riscv,cpu-intc";
+                phandle = <1>;
+            };
+        };
+    };
+
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x40000000 0x04000000>;  /* 64 MiB */
+    };
+
+    clint@f0010000 {
+        compatible = "riscv,clint0";
+        reg = <0xf0010000 0x10000>;
+        interrupts-extended = <&{/cpus/cpu@0/interrupt-controller} 3>,
+                              <&{/cpus/cpu@0/interrupt-controller} 7>;
+    };
+
+    soc {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "simple-bus";
+        ranges;
+
+        serial0: uart@f0001800 {
+            compatible = "litex,liteuart";
+            reg = <0xf0001800 0x100>;
+            interrupts-extended = <&{/cpus/cpu@0/interrupt-controller} 0>;
+            status = "okay";
+        };
+
+        timer0: timer@f0001000 {
+            compatible = "litex,timer";
+            reg = <0xf0001000 0x100>;
+            interrupts-extended = <&{/cpus/cpu@0/interrupt-controller} 1>;
+            clock-frequency = <50000000>;
+            status = "okay";
+        };
+
+        draw_engine: draw-engine@82000000 {
+            compatible = "draw-cojt,draw-engine-1.0";
+            reg = <0x82000000 0x10000>;
+            interrupts-extended = <&{/cpus/cpu@0/interrupt-controller} 2>;
+            status = "okay";
+        };
+    };
+
+    aliases {
+        serial0 = &serial0;
+    };
+};

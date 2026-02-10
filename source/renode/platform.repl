@@ -1,0 +1,58 @@
+// DrawEngine Linux SoC — Renode Platform Description
+//
+// VexRiscv (rv32ima, MMU) running Linux, with draw_engine
+// co-simulated via Verilator.
+//
+// Memory map:
+//   0x0000_0000  ROM       (128 KiB)
+//   0x1000_0000  SRAM      (64 KiB)
+//   0x4000_0000  main_ram  (64 MiB) — Linux kernel, rootfs, framebuffer
+//   0x8200_0000  draw_engine (co-simulated, 64 KiB)
+//   0xF000_0000  CSR space  (UART, Timer)
+//   0xF001_0000  CLINT
+//
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imafdc_zicsr_zifencei"
+    privilegedArchitecture: PrivilegedArchitecture.Priv1_10
+    timeProvider: clint
+
+rom: Memory.MappedMemory @ sysbus 0x00000000
+    size: 0x00020000
+
+sram: Memory.MappedMemory @ sysbus 0x10000000
+    size: 0x00010000
+
+ram: Memory.MappedMemory @ sysbus 0x40000000
+    size: 0x04000000
+
+uart: UART.LiteX_UART @ sysbus 0xF0001800
+    -> cpu@0
+
+timer0: Timers.LiteX_Timer @ sysbus 0xF0001000
+    frequency: 50000000
+    -> cpu@1
+
+clint: IRQControllers.CoreLevelInterruptor @ sysbus 0xF0010000
+    frequency: 50000000
+    // CLINT output 0 = MSip (software), output 1 = MTimer (timer)
+    // VexRiscv uses non-standard IRQ pins: 100=timer, 101=software
+    [0, 1] -> cpu@[101, 100]
+
+draw_engine: CoSimulated.CoSimulatedPeripheral @ sysbus <0x82000000, +0x10000>
+    frequency: 50000000
+    limitBuffer: 100000
+    timeout: 10000
+
+// LiteX Framebuffer — reads pixel data that draw_engine DMA writes to main_ram.
+// Framebuffer region: 0x40C0_0000 (ram + offset 0x00C0_0000)
+// DMA control registers at 0xF000_6000, VTG registers at 0xF000_6800.
+litex_video: Video.LiteX_Framebuffer_CSR32 @ {
+    sysbus new Bus.BusMultiRegistration { address: 0xF0006000; size: 0xC; region: "dma" };
+    sysbus new Bus.BusMultiRegistration { address: 0xF0006800; size: 0x24; region: "vtg" }
+}
+    format: PixelFormat.ARGB8888
+    memory: ram
+    offset: 0x00C00000
+    hres: 640
+    vres: 480

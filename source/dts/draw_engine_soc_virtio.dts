@@ -1,0 +1,154 @@
+/*
+ * draw_engine_soc_virtio.dts — Device Tree for DrawEngine Linux SoC
+ *                               with VirtIO-GPU support
+ *
+ * VexRiscv (rv32ima + MMU) running Linux with draw_engine accessible
+ * via both legacy MMIO and VirtIO-GPU MMIO transport.
+ *
+ * IRQ architecture:
+ *   builtInIrqController: false — standard RISC-V interrupt model
+ *   CLINT provides MSI (cause 3) and MTI (cause 7) to cpu-intc
+ *   PLIC at 0xF0C00000 routes device IRQs to MEI (cause 11) / SEI (cause 9)
+ *   PLIC source 1 = VirtIO used-buffer notification
+ *   PLIC source 2 = draw_engine completion
+ *
+ * Memory map:
+ *   0x0000_0000  ROM       (512 KiB)
+ *   0x1000_0000  SRAM      (64 KiB)
+ *   0x4000_0000  main_ram  (64 MiB)
+ *   0x8200_0000  draw_engine_virtio (64 KiB)
+ *                  0x8200_0000  VirtIO MMIO registers (0x000-0x1FF)
+ *                  0x8200_2000  Legacy draw_engine registers (0x2000-0x2FFF)
+ *   0xF000_0000  CSR (UART)
+ *   0xF001_0000  CLINT
+ *   0xF0C0_0000  PLIC
+ */
+
+/dts-v1/;
+
+/ {
+    #address-cells = <1>;
+    #size-cells = <1>;
+    compatible = "litex,draw-engine-soc";
+    model = "DrawEngine Linux SoC (VirtIO-GPU)";
+
+    chosen {
+        bootargs = "console=tty0 console=ttyS0,115200 earlycon=uart8250,mmio32,0xf0001800,115200n8";
+        stdout-path = "serial0:115200n8";
+        /* initramfs is embedded in the kernel Image — no external initrd */
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        timebase-frequency = <50000000>;
+
+        cpu@0 {
+            device_type = "cpu";
+            compatible = "riscv";
+            riscv,isa = "rv32imafdc_zicsr_zifencei";
+            riscv,isa-base = "rv32i";
+            riscv,isa-extensions = "i", "m", "a", "f", "d", "c", "zicsr", "zifencei";
+            mmu-type = "riscv,sv32";
+            reg = <0>;
+            clock-frequency = <50000000>;
+            status = "okay";
+
+            cpu_intc: interrupt-controller {
+                #interrupt-cells = <1>;
+                interrupt-controller;
+                compatible = "riscv,cpu-intc";
+            };
+        };
+    };
+
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x40000000 0x04000000>;  /* 64 MiB */
+    };
+
+    reserved-memory {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+
+        framebuffer_reserved: framebuffer@43e00000 {
+            reg = <0x43e00000 0x00200000>;  /* 2 MiB at end of RAM */
+            no-map;
+        };
+    };
+
+    clint@f0010000 {
+        compatible = "riscv,clint0";
+        reg = <0xf0010000 0x10000>;
+        /* MSI = cause 3, MTI = cause 7 */
+        interrupts-extended = <&cpu_intc 3>,
+                              <&cpu_intc 7>;
+    };
+
+    soc {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "simple-bus";
+        ranges;
+
+        plic: interrupt-controller@f0c00000 {
+            compatible = "sifive,plic-1.0.0";
+            reg = <0xf0c00000 0x400000>;
+            #address-cells = <0>;
+            #interrupt-cells = <1>;
+            interrupt-controller;
+            riscv,ndev = <31>;
+            /* Context 0 = MEI (cause 11), Context 1 = SEI (cause 9) */
+            interrupts-extended = <&cpu_intc 11>,
+                                  <&cpu_intc 9>;
+        };
+
+        serial0: uart@f0001800 {
+            compatible = "ns16550a";
+            reg = <0xf0001800 0x100>;
+            reg-shift = <2>;
+            reg-io-width = <4>;
+            clock-frequency = <50000000>;
+            current-speed = <115200>;
+            /* No interrupt — serial driver uses polling mode. */
+            status = "okay";
+        };
+
+        /*
+         * VirtIO-GPU device via MMIO transport.
+         * Linux's virtio-mmio driver will probe this node, read the
+         * Magic/Version/DeviceID registers, and load virtio-gpu.ko.
+         *
+         * IRQ routed through PLIC source 1 (from sim_main_virtio.cpp
+         * registerInterrupt(VIRTIO_IRQ, 2) → cosim GPIO 2 → plic@1).
+         */
+        virtio_gpu: virtio@82000000 {
+            compatible = "virtio,mmio";
+            reg = <0x82000000 0x200>;     /* VirtIO MMIO register space */
+            interrupt-parent = <&plic>;
+            interrupts = <1>;             /* PLIC source 1 */
+            status = "okay";
+        };
+
+        /*
+         * Legacy draw_engine UIO mapping.
+         * Use generic-uio driver for userspace access to the
+         * raw draw_engine registers (bypass VirtIO path).
+         *
+         * IRQ routed through PLIC source 2 (from sim_main_virtio.cpp
+         * registerInterrupt(DRW_IRQ, 3) → cosim GPIO 3 → plic@2).
+         */
+        draw_engine_uio: draw-engine@82002000 {
+            compatible = "generic-uio";
+            reg = <0x82002000 0x1000>;
+            interrupt-parent = <&plic>;
+            interrupts = <2>;             /* PLIC source 2 */
+            status = "okay";
+        };
+    };
+
+    aliases {
+        serial0 = &serial0;
+    };
+};
