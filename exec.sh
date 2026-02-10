@@ -32,7 +32,10 @@ case "${1:-shell}" in
         echo "    make help       — show available targets"
         echo "    make demo-info  — show package contents"
         echo ""
-        $DOCKER_RUN -it "$IMAGE_REF"
+        $DOCKER_RUN -it \
+            -p 4321:4321 -p 1234:1234 \
+            -p 5900:5900 -p 5800:5800 \
+            "$IMAGE_REF"
         ;;
 
     linux)
