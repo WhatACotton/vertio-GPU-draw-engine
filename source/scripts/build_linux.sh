@@ -258,10 +258,23 @@ fi
 # ══════════════════════════════════════════════════════════════
 ROOTFS_DIR="$BUILD_DIR/rootfs"
 
-# Invalidate rootfs cache if build script changed (e.g. inittab edits)
-if [[ -f "$BOOT_DIR/rootfs.cpio" && "$0" -nt "$BOOT_DIR/rootfs.cpio" ]]; then
-    info "build_linux.sh is newer than rootfs.cpio — rebuilding rootfs..."
-    rm -f "$BOOT_DIR/rootfs.cpio"
+# Invalidate rootfs cache if build script or any Linux app source changed
+ROOTFS_STALE=false
+if [[ -f "$BOOT_DIR/rootfs.cpio" ]]; then
+    if [[ "$0" -nt "$BOOT_DIR/rootfs.cpio" ]]; then
+        info "build_linux.sh is newer than rootfs.cpio — rebuilding rootfs..."
+        ROOTFS_STALE=true
+    fi
+    for src in "$PROJECT_ROOT"/linux/*.c "$PROJECT_ROOT"/linux/*.h; do
+        if [[ -f "$src" && "$src" -nt "$BOOT_DIR/rootfs.cpio" ]]; then
+            info "$(basename "$src") is newer than rootfs.cpio — rebuilding rootfs..."
+            ROOTFS_STALE=true
+            break
+        fi
+    done
+    if $ROOTFS_STALE; then
+        rm -f "$BOOT_DIR/rootfs.cpio"
+    fi
 fi
 
 if [[ ! -f "$BOOT_DIR/rootfs.cpio" ]]; then
@@ -403,6 +416,20 @@ if [ -x /usr/bin/draw_uio_test ]; then
     echo "Running draw_uio_test..."
     /usr/bin/draw_uio_test
 fi
+echo ""
+echo "Available commands:"
+[ -x /usr/bin/fb_tux ]     && echo "  fb_tux             — Draw Tux logo on framebuffer"
+[ -x /usr/bin/fb_smallpt ] && echo "  fb_smallpt [spp]   — Path tracer (Cornell Box)"
+[ -x /usr/bin/fb_smallpt ] && echo "  fb_smallpt W H spp — Path tracer (custom resolution)"
+[ -x /usr/bin/draw_uio_test ] && echo "  draw_uio_test      — UIO register test"
+echo ""
+
+# Auto-run fb_smallpt in background if available
+if [ -x /usr/bin/fb_smallpt ]; then
+    echo "Starting fb_smallpt in background..."
+    /usr/bin/fb_smallpt &
+fi
+
 echo "Ready. Type 'poweroff' to exit."
 INITEOF
         chmod +x etc/init.d/rcS
@@ -433,7 +460,7 @@ INITEOF
     if $HAS_LINUX_CC && [[ -f "$PROJECT_ROOT/linux/draw_uio_test.c" ]]; then
         info "Cross-compiling draw_uio_test..."
         mkdir -p "$ROOTFS_DIR/usr/bin"
-        ${CROSS_LINUX}gcc -march=rv32ima -mabi=ilp32 \
+        ${CROSS_LINUX}gcc -march=rv32imafdc -mabi=ilp32d \
             -O2 -static \
             -o "$ROOTFS_DIR/usr/bin/draw_uio_test" \
             "$PROJECT_ROOT/linux/draw_uio_test.c" 2>/dev/null \
@@ -452,6 +479,18 @@ INITEOF
             "$PROJECT_ROOT/linux/fb_tux.c" 2>&1 \
             && ok "fb_tux included in rootfs" \
             || warn "fb_tux compilation failed (non-fatal)"
+    fi
+
+    # ── Cross-compile fb_smallpt (software path tracer) ─────
+    if $HAS_LINUX_CC && [[ -f "$PROJECT_ROOT/linux/fb_smallpt.c" ]]; then
+        info "Cross-compiling fb_smallpt..."
+        mkdir -p "$ROOTFS_DIR/usr/bin"
+        ${CROSS_LINUX}gcc -march=rv32imafdc -mabi=ilp32d \
+            -O2 -static \
+            -o "$ROOTFS_DIR/usr/bin/fb_smallpt" \
+            "$PROJECT_ROOT/linux/fb_smallpt.c" 2>&1 \
+            && ok "fb_smallpt included in rootfs" \
+            || warn "fb_smallpt compilation failed (non-fatal)"
     fi
 
     # ── Create CPIO archive ──────────────────────────────────
@@ -474,7 +513,16 @@ if [[ -d "$ROOTFS_DIR" && -d "$LINUX_SRC_DIR" ]]; then
     EXPECTED_SRC="$ROOTFS_DIR"
     [[ -f "$DEVLIST" ]] && EXPECTED_SRC="$ROOTFS_DIR $DEVLIST"
 
+    NEED_REBUILD=false
     if [[ "$CURRENT_SRC" != "$EXPECTED_SRC" ]]; then
+        info "Initramfs source changed — need kernel rebuild..."
+        NEED_REBUILD=true
+    elif [[ "$BOOT_DIR/rootfs.cpio" -nt "$BOOT_DIR/Image" ]]; then
+        info "rootfs.cpio is newer than Image — need kernel rebuild..."
+        NEED_REBUILD=true
+    fi
+
+    if $NEED_REBUILD; then
         info "Embedding rootfs into kernel as initramfs..."
         scripts/config --file .config \
             --set-str INITRAMFS_SOURCE "$EXPECTED_SRC"
